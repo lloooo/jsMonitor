@@ -2,12 +2,46 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Hello World!</title>
+  <meta http-equiv="refresh" content="5">
+  <title>monitor</title>
 </head>
 <body>
-<h1>Hello World!</h1>
-We are using node <script>document.write(process.versions.node)</script>,
-Chrome <script>document.write(process.versions.chrome)</script>,
-and Electron <script>document.write(process.versions.electron)</script>.
+<p id="smzdm"></p>
+<p id="zuanke8"></p>
+<script>
+  let http = require('https');
+
+  //什么值得买
+  let smzdmEle = document.getElementById('smzdm');
+  const zdmurl = 'https://api.smzdm.com/v1/ranking_list/articles?category_ids=&f=iphone&mall_ids=&offset=0&order=12&slot=12&tab=1&tab_id=47&tag_ids=&v=8.2&weixin=1';
+  let req = http.request(zdmurl, function (res) {
+    res.setEncoding('utf8');
+
+    let zdmStr = '';
+    res.on('data', function (data) {
+      zdmStr += data
+    });
+
+    res.on('end', function () {
+      let zdmObj = JSON.parse(zdmStr);
+      for (let key in zdmObj.data.rows) {
+        let row = zdmObj.data.rows[key];
+        let per = (100 * row.article_worthy_per_cent).toFixed(2);
+        if (per > 70 && parseInt(new Date().getTime() / 1000) - new Date(row.article_date.substring(0, 19).replace(/-/g, '/')).getTime() / 1000 < 5 * 60 * 60) {
+          let newEle = document.createElement('p');
+          newEle.innerHTML = row.article_title + '<br>' + row.article_price + '<br>值' + row.article_worthy + '---不值' + row.article_unworthy + '<br>' + per
+            +'%<br><a href="' + row.article_url + '" target="_blank">' + row.article_url + '</a>';
+          smzdmEle.appendChild(newEle)
+        }
+      }
+    });
+  });
+  req.on('error', function (e) {
+    console.log('problem with problem ' + e.message)
+  })
+  req.end()
+
+
+</script>
 </body>
 </html>
