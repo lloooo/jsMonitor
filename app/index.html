@@ -9,38 +9,97 @@
 <p id="smzdm"></p>
 <p id="zuanke8"></p>
 <script>
-  let http = require('https');
+  const https = require('https');
+  const http = require('http');
+  const querystring = require('querystring');
+  const {shell} = require('electron');
+
+  getData().then(
+  );
+
+  async function getData() {
+    await smzdm();
+    await zuanke8();
+  }
 
   //什么值得买
-  let smzdmEle = document.getElementById('smzdm');
-  const zdmurl = 'https://api.smzdm.com/v1/ranking_list/articles?category_ids=&f=iphone&mall_ids=&offset=0&order=12&slot=12&tab=1&tab_id=47&tag_ids=&v=8.2&weixin=1';
-  let req = http.request(zdmurl, function (res) {
-    res.setEncoding('utf8');
+  function smzdm() {
+    let smzdmEle = document.getElementById('smzdm');
+    const zdmurl = 'https://api.smzdm.com/v1/ranking_list/articles?category_ids=&f=iphone&mall_ids=&offset=0&order=12&slot=12&tab=1&tab_id=47&tag_ids=&v=8.2&weixin=1';
+    let req = https.request(zdmurl, function (res) {
+      res.setEncoding('utf8');
 
-    let zdmStr = '';
-    res.on('data', function (data) {
-      zdmStr += data
-    });
+      let zdmStr = '';
+      res.on('data', function (data) {
+        zdmStr += data
+      });
 
-    res.on('end', function () {
-      let zdmObj = JSON.parse(zdmStr);
-      for (let key in zdmObj.data.rows) {
-        let row = zdmObj.data.rows[key];
-        let per = (100 * row.article_worthy_per_cent).toFixed(2);
-        if (per > 70 && parseInt(new Date().getTime() / 1000) - new Date(row.article_date.substring(0, 19).replace(/-/g, '/')).getTime() / 1000 < 5 * 60 * 60) {
-          let newEle = document.createElement('p');
-          newEle.innerHTML = row.article_title + '<br>' + row.article_price + '<br>值' + row.article_worthy + '---不值' + row.article_unworthy + '<br>' + per
-            +'%<br><a href="' + row.article_url + '" target="_blank">' + row.article_url + '</a>';
-          smzdmEle.appendChild(newEle)
+      res.on('end', function () {
+        let zdmObj = JSON.parse(zdmStr);
+        for (let key in zdmObj.data.rows) {
+          let row = zdmObj.data.rows[key];
+          let per = (100 * row.article_worthy_per_cent).toFixed(2);
+          if (per > 70 && parseInt(new Date().getTime() / 1000) - new Date(row.article_date.substring(0, 19).replace(/-/g, '/')).getTime() / 1000 < 5 * 60 * 60) {
+            let newEle = document.createElement('p');
+            newEle.innerHTML = row.article_title + '<br>' + row.article_price + '<br>值' + row.article_worthy + '---不值' + row.article_unworthy + '<br>' + per
+              + '%<br><a href=\"javascript:void(0)\" target=\"_blank\" onclick=\"openBrowser(\'' + row.article_url + '\')\">' + row.article_url + '</a>';
+            smzdmEle.appendChild(newEle)
+          }
         }
-      }
+      });
     });
-  });
-  req.on('error', function (e) {
-    console.log('problem with problem ' + e.message)
-  })
-  req.end()
+    req.on('error', function (e) {
+      alert('problem with problem ' + e.message)
+    });
+    req.end();
+  }
 
+  //赚客吧
+  function zuanke8() {
+    let contents = querystring.stringify({
+      mod : 'all'
+    });
+
+    let options = {
+      host : 'www.zuanke8.com',
+      path : '/api/mobile/index.php?sessionid=&version=4.1&zstamp=' + '1524549400' + '&module=zuixin&sign=' + '16f179de310d945c7f17d91d3e97b8e4',
+      method : 'POST',
+      headers : {
+        'Content-type' : 'application/x-www-form-urlencoded',
+        'Content-length' : contents.length
+      }
+    };
+    let req = http.request(options, function (res) {
+      res.setEncoding('utf8');
+      let zkbstr = '';
+      res.on('data', function (data) {
+        zkbstr += data
+      });
+      res.on('end', function () {
+        let strObj = JSON.parse(zkbstr);
+        for (let i in strObj.data.relist) {
+          let item = strObj.data.relist[i];
+          let reg = /(速度|水|快|好价|还款)/;
+          if (reg.test(item.subject)) {
+            let ele = document.getElementById('zuanke8');
+            let newEle = document.createElement('p');
+            let url = 'https://www.zuanke8.com/thread-' + item.tid + '-1-1.html';
+            newEle.innerHTML = '<a href=\"javascript:void(0)\" target=\"_blank\" onclick=\"openBrowser(\'' + url + '\')\">' + item.subject + '</a>'
+            ele.appendChild(newEle);
+          }
+        }
+      })
+    });
+    req.write(contents);
+    req.on('error', function (e) {
+      alert(e.message)
+    });
+    req.end();
+  }
+
+  function openBrowser(url) {
+    shell.openExternal(url)
+  }
 
 </script>
 </body>

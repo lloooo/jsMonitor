@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
-    "packager": "electron-packager ./ HelloWorld --platform=win32 --arch=x64 --out ./outApp --version 1.4.0 --overwrite"
+    "packager": "electron-packager ./ monitor --platform=win32 --arch=x64 --out ./outApp --version 1.4.0 --overwrite"
   },
   "author": "wangxianlong",
   "license": "ISC",
